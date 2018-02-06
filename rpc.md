@@ -13,17 +13,17 @@ The Clover Connector Browser SDK provides an interface that enables your point-o
 > * Installed NPM on your computer.
 
 
-The SDK can be broken down into two main structures: the **CloverConnector** and the **CloverConnectorListener**. Complete documentation can be found [here][1].
+The SDK can be broken down into two main structures: the **ICloverConnector** and the **ICloverConnectorListener**. Complete documentation can be found [here][1].
 
 ---
 
-## The CloverConnector
-The CloverConnector is the interface which the developer will use to issue commands to the Clover device. 
+## The ICloverConnector
+The ICloverConnector is the interface which the developer will use to issue commands to the Clover device. 
 
 To set up this interface, the SDK provides a factory method that takes in a configuration object and returns a CloverConnector. The first thing that we need to do is create the configuration object, (there's a little bit of a disconnect between the configuration settings and the interfaces of the clover device the names correspond to the actual application but aren't really descriptive of the connection, mostly because of the display part) which will specify one of two ways the connector will use to connect to the Clover device:
 
 > ### a. Secure Network Pay Display (Direct Connection through Local Network)
-> (Can the adv and disadbv sections be collapsible? if so, then maybe having an extra bit of explanation here would solve the problem mentioned above)
+> (Can the adv and disadbv sections be collapsible? If so, then maybe having an extra bit of explanation here would solve the problem mentioned above)
 > > #### Advantages 
 > > - Performance – A direct connection will perform better than a cloud connection, which proxies requests through Clover’s servers.
 > > - Simple connection configuration – The configuration for a direct connection is less complex.
@@ -39,7 +39,7 @@ To set up this interface, the SDK provides a factory method that takes in a conf
 > > - More complex connection configuration – The connection configuration for the cloud is more complex than the configuration for a direct connection.
 
 ### Step 1. Specify a configuration type and its parameters
-Use the CloverDeviceConfiguration constructor to create a configuration object. It takes in a number of different parameters(specific to connection type) and it might be best to get them sorted out before jumping into creating the configuration.
+Use the `WebSocketPairedCloverDeviceConfiguration` constructor to create a configuration object. It takes in a number of different parameters(specific to connection type) and it might be best to get them sorted out before jumping into creating the configuration.
 ```javascript 
 const clover = require ("remote-pay-cloud");
 var connectorConfiguration = new clover.WebSocketPairedCloverDeviceConfiguration([params...]);
@@ -48,7 +48,7 @@ a. Secure Network Pay Display params and setup
 > (I think it would be great if all the steps could be collapsed, giving a higher level overview of the process)
 > #### Parameters
 > 1. `Application ID` – The ID that uniquely identifies the POS (e.g. com.company.MyPOS:2.3.1). To retrieve your Application ID, see step 5 on the Create Your Remote App ID page.
-> 2. `webSocketFactory` – A function that returns an instance of the CloverWebSocketInterface that will be used when connecting. For browser implementations, this can be defined as BrowserWebSocketImpl.createInstance. For Node.JS implementations, define the function as heartbeatInterval: number = 1000;.
+> 2. `webSocketFactory` – A function that returns an instance of the CloverWebSocketInterface that will be used when connecting. For browser implementations, this can be defined as BrowserWebSocketImpl.createInstance. For Node.JS implementations, you will need to implement an object that extends the [CloverWebSocketInterface][9]. [Example can be found here][8].
 > 3. `imageUtil` – A utility for translating images into base64 strings.
 > 4. `heartbeatInterval` – How long to wait for a PING before disconnecting, in milliseconds.
 > 5. `reconnectDelay` – How long to wait before attempting to reconnect, in milliseconds.
@@ -56,10 +56,12 @@ a. Secure Network Pay Display params and setup
 > 7. `posName` – The POS name the Secure Network Pay Display app shows on the Clover device during the pairing process (e.g. MyPOS).
 > 8. `serialNumber` – The serial number/identifier for the POS, as displayed in the Secure Network Pay Display app. Note: This is not the same as the Clover device’s serial number.
 > 9. `authToken` – The authToken retrieved from a previous pairing response, passed as an argument to onPairingSuccess. This will be null for the first connection. Store and use the authToken in subsequent requests to skip pairing.
-> const clover = require ("remote-pay-cloud");
+> #### Setup
 > ```javascript
+> const clover = require ("remote-pay-cloud");
+> //...
 > var connectorConfiguration = new clover.WebSocketPairedCloverDeviceConfiguration(
->    "wss://192.168.0.20:12345/remote_pay", // endpoint
+>        "wss://192.168.0.20:12345/remote_pay", // endpoint
 >        "com.cloverconnector.javascript.simple.sample:1.4", // applicationId
 >        "Javascript Simple Sample", // posName
 >        "Register_1", // serialNumber
@@ -67,10 +69,11 @@ a. Secure Network Pay Display params and setup
 >        clover.BrowserWebSocketImpl.createInstance, // webSocketFactory
 >        new clover.ImageUtil(), // imageUtil
 >        1000, // heartbeatInterval
->        3000); // reconnectDelay
+>        3000 // reconnectDelay
+> ); 
 >
 >
-> networkConfiguration = Object.assign(connectorConfiguration, {
+> SNPDConfiguration = Object.assign(connectorConfiguration, {
 >    onPairingCode: function (pairingCode) {
 >         console.log(`Pairing code is  ${pairingCode}`);
 >    },
@@ -79,7 +82,104 @@ a. Secure Network Pay Display params and setup
 >    }
 > });
 >```
+b. Cloud Pay Display params and setup
+> #### Parameters
+> 1. `Application ID` – The ID that uniquely identifies the POS (e.g. com.company.MyPOS:2.3.1). To retrieve your Application ID, see step 5 on the Create Your Remote App ID page.
+> 2. `webSocketFactory` – A function that returns an instance of the CloverWebSocketInterface that will be used when connecting. For browser implementations, this can be defined as BrowserWebSocketImpl.createInstance. For Node.JS implementations, you will need to implement an object that extends the [CloverWebSocketInterface][9]. [Example can be found here][8].
+> 3. `imageUtil` – A utility for translating images into base64 strings.
+> 4. `heartbeatInterval` – How long to wait for a PING before disconnecting, in milliseconds.
+> 5. `reconnectDelay` – How long to wait before attempting to reconnect, in milliseconds.
+> 6. cloverServer – The base URL for the Clover server used in the cloud connection (e.g. https://www.clover.com, https://sandbox.dev.clover.com/).
+> 7. accessToken – The steps for obtaining your accessToken are available on the OAuth 2.0 page.
+> 8. httpSupport – The helper object used when making  HTTP requests.
+> 9. merchantId – The steps for finding your merchantId are available on the Merchant ID and API Token for Development page.
+> 10. deviceId – To obtain the deviceId, you must first retrieve an accessToken and your merchantId.
+> 11. Then, make the following GET request to the Clover API: https://{cloverServer}/v3/merchants/{merchantId}/devices?access_token={accessToken}
+> 12. friendlyId – An identifier for the specific terminal connected to this device. This ID is used in debugging, and may be sent to other clients if they attempt to connect to the same device. Clover will also send it to other clients that are currently connected if the device does a forceConnect.
+> 13. forceConnect – If true, overtakes any existing connection.
+> #### Setup
+> ```javascript
+> const clover = require ("remote-pay-cloud");
+> //...
+> var connectorConfiguration = new clover.WebSocketCloudCloverDeviceConfiguration(
+>    "com.mycompany.app.remoteApplicationId:0.0.1", // applicationId      
+>    clover.BrowserWebSocketImpl.createInstance, // webSocketFactory  
+>    new clover.ImageUtil(), // imageUtil
+>    "https://sandboxdev.dev.clover.com/", // clover server     
+>    "7aacbd26-d900-8e6a-80f0-ae55f5d1cae2", // accessToken
+>    new clover.HttpSupport(XMLHttpRequest), // httpSupport
+>    "VKYQ0RVGMYHRR", // merchantId
+>    "f0f00afd4bc9c55ef0733e7cb8c3da97", // deviceId
+>    "testTerminal1_connection1", // friendlyId
+>    true, // forceConnect
+>    1000, // heartbeatInterval
+>    3000 // reconnectDelay
+> );
+> ```
 
+### Step 2. Specify a Factory
+
+```javascript
+const clover = require ("remote-pay-cloud");
+//...
+var builderConfiguration = {};
+builderConfiguration[clover.CloverConnectorFactoryBuilder.FACTORY_VERSION] = clover.CloverConnectorFactoryBuilder.VERSION_12;
+
+var cloverConnectorFactory = clover.CloverConnectorFactoryBuilder.createICloverConnectorFactory(builderConfiguration);
+```
+### Step 3. Build a ICloverConnector
+```javascript
+//...
+var cloverConnector = cloverConnectorFactory.createICloverConnector(connectorConfiguration);
+```
+
+### Step 4. Build a ICloverConnectorListener
+So now we've got a CloverConnector, through which we can issue commands to the Clover device, such as `cloverConnector.initializeConnection();`, but how can we build a program that reacts to anything that it does or signals? For that, we'll need to build a CloverConnectorListener, which is really just a collection of callback functions.
+
+We'll overwrite some of the functions from the `clover.remotepay.ICloverConnectorListener.prototype` to make our own custom listener. A complete list of events can be found [here][10]. For now, we'll just get ready to connect.
+```javascript
+const clover = require ("remote-pay-cloud");
+//...
+
+var defaultCloverConnectorListener = Object.assign({}, clover.remotepay.ICloverConnectorListener.prototype, {
+
+   onDeviceReady: function (merchantInfo) {
+       updateStatus("Pairing successfully completed, your Clover device is ready to process requests.");
+       console.log({message: "Device Ready to process requests!", merchantInfo: merchantInfo});
+   },
+
+   onDeviceDisconnected: function () {
+       console.log({message: "Disconnected"});
+   },
+
+   onDeviceConnected: function () {
+       console.log({message: "Connected, but not available to process requests"});
+   }
+
+});
+```
+> NOTE: 
+> onDeviceReady() may be called multiple times.  For this reason, we do not recommended initiating sales or other transactions from onDeviceReady().
+
+### Step 5. Attach the ICloverConnectorListener to the ICloverConnector
+
+```javascript
+cloverConnector.addCloverConnectorListener(defaultCloverConnectorListener);
+```
+
+### Step 6. Initialize the connection
+The connection has been all set up, but before calling any methods on the ICloverConnector, we need to call the following method to initialize the connection:
+
+```javascript
+cloverConnector.initializeConnection();
+```
+
+### You're all set! 
+Test out the connection with the following code:
+```javascript
+cloverConnector.showMessage("Welcome to Clover Connector!");
+```
+Happy coding!
 
 [1]: https://clover.github.io/remote-pay-java/1.4.0/docs/index.html?com/clover/remote/client/WebSocketCloverDeviceConfiguration.html
 [2]: https://docs.clover.com/build/architecture/
@@ -88,3 +188,6 @@ a. Secure Network Pay Display params and setup
 [5]: https://cloverdevkit.com/
 [6]: https://docs.clover.com/build/devkit/
 [7]: https://docs.clover.com/build/create-your-remote-app-id/
+[8]: https://github.com/clover/remote-pay-cloud-examples/blob/master/remote-pay-cloud-nodejs-example/lib/support/ExampleWebSocketFactory.js
+[9]: http://clover.github.io/remote-pay-cloud/1.4.1/classes/_websocket_cloverwebsocketinterface_.cloverwebsocketinterface.html
+[10]: https://clover.github.io/remote-pay-cloud-api/1.4.1/remotepay.ICloverConnectorListener.html
