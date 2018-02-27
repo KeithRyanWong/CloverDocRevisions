@@ -92,7 +92,7 @@ The ICloverConnectorListener is an object that attaches to the ICloverConnector 
 > >            }
 > >        }
 > > ```
-> ### **Step A.3. Make an instance of your listener and attach it to the ICloverConnector**
+> ### **Step A.3. Construct the listener and attach it to the ICloverConnector**
 > > ``` C
 > > var ccl = new ExampleCloverConnectionListener(cloverConnector);
 > >
@@ -170,6 +170,66 @@ With that process in mind, let's get to building out your application.
 > >     return config;
 > > }
 > >```
+> ### **Step B.3. Construct an ICloverConnector**
+> With our configuration all set up, instantiating an ICloverConnector is as easy as:
+> >```C
+> >var cloverConnector = new CloverConnector(getNetworkConnection());
+> >```
+> ### **Step B.4. Build a ICloverConnectorListener**
+> > An ICloverConnector can be created by extending the DefaultCloverConnectorListener.
+> > Define the following class and fill it in with whatever you want!
+> > ``` C
+> > public class ExampleCloverConnectionListener : DefaultCloverConnectorListener
+> >        {
+> >            public ExampleCloverConnectionListener(ICloverConnector cloverConnector) : base(cloverConnector)
+> >            {
+> >
+> >            }
+> >            public override void OnDeviceReady(MerchantInfo merchantInfo)
+> >            {
+> >                base.OnDeviceReady(merchantInfo);
+> >                Console.WriteLine("We're ready!");
+> >            }
+> >
+> >            public override void OnDeviceConnected()
+> >            {
+> >                base.OnDeviceConnected();
+> >                Console.WriteLine("We're Connected, still waiting for ready though!");
+> >            }
+> >
+> >            public override void OnDeviceDisconnected()
+> >            {
+> >                base.OnDeviceDisconnected();
+> >                Console.WriteLine("We're gone!");
+> >            }
+> >
+> >            public override void OnConfirmPaymentRequest(ConfirmPaymentRequest request)
+> >            {
+> >                throw new NotImplementedException();
+> >            }
+> >
+> >            public override void OnSaleResponse(SaleResponse response)
+> >            {
+> >                if (response.Result == ResponseCode.FAIL)
+> >                {
+> >                    Console.WriteLine($"Error: {response.Message}");
+> >                    Thread.Sleep(10000);
+> >                }
+> >                base.OnSaleResponse(response);
+> >            }
+> >        }
+> > ```
+> ### **Step B.5. Construct the listener and attach it to the ICloverConnector**
+> > ``` C
+> > var ccl = new ExampleCloverConnectionListener(cloverConnector);
+> >
+> > cloverConnector.AddCloverConnectorListener(ccl);
+> > ```
+> ### **Step B.6. Initialize the connection**
+> > You must initialize the connection before making any requests. 
+> > ``` C
+> > cloverConnector.InitializeConnection();
+> > ```
 
 
 ---
