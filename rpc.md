@@ -93,10 +93,10 @@ b. Cloud Pay Display params and setup
 > 7. accessToken – The steps for obtaining your accessToken are available on the OAuth 2.0 page.
 > 8. httpSupport – The helper object used when making  HTTP requests.
 > 9. merchantId – The steps for finding your merchantId are available on the Merchant ID and API Token for Development page.
-> - 9b. deviceId – To obtain the deviceId, you must first retrieve an accessToken and your merchantId.
-> 10. Then, make the following GET request to the Clover API: https://{cloverServer}/v3/merchants/{merchantId}/devices?access_token={accessToken}
-> 11. friendlyId – An identifier for the specific terminal connected to this device. This ID is used in debugging, and may be sent to other clients if they attempt to connect to the same device. Clover will also send it to other clients that are currently connected if the device does a forceConnect.
-> 12. forceConnect – If true, overtakes any existing connection.
+> - 9a. deviceId – To obtain the deviceId, you must first retrieve an accessToken and your merchantId.
+> - 9b. Then, make the following GET request to the Clover API: https://{cloverServer}/v3/merchants/{merchantId}/devices?access_token={accessToken}
+> 10. friendlyId – An identifier for the specific terminal connected to this device. This ID is used in debugging, and may be sent to other clients if they attempt to connect to the same device. Clover will also send it to other clients that are currently connected if the device does a forceConnect.
+> 11. forceConnect – If true, overtakes any existing connection.
 > #### Setup
 > ```javascript
 > const clover = require ("remote-pay-cloud");
