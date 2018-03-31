@@ -73,7 +73,7 @@ a. Secure Network Pay Display params and setup
 > ); 
 >
 >
-> SNPDConfiguration = Object.assign(connectorConfiguration, {
+> var SNPDConfiguration = Object.assign(connectorConfiguration, {
 >    onPairingCode: function (pairingCode) {
 >         console.log(`Pairing code is  ${pairingCode}`);
 >    },
